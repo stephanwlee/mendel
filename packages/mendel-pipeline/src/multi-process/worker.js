@@ -82,3 +82,7 @@ class Worker {
 }
 
 Worker.init();
+
+process.on('error', function(err) {
+    console.warn('Worker process has been killed', err);
+})

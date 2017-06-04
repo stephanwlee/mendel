@@ -16,8 +16,9 @@ program
     .usage('[options] <dir path>')
     .option('--ignore <patterns>', 'Comma separated ignore glob patterns', parseIgnores, ['**/_test_/**', '**/_browser_test_/**', '**/assets/**'])
     // .option('-v, --verbose', 'Verbose mode')
-    .option('-w, --watch', 'Watch mode', false)
-    .option('-o, --outlet', 'Write a mendel v1 compatible manifest', false)
+    .option('-w,--watch', 'Watch mode', false)
+    .option('-m,--debug-memory', 'Debug memory usage by taking heap', false)
+    .option('-o,--outlet', 'Write a mendel v1 compatible manifest', false)
     .parse(process.argv);
 
 if (program.watch) {
@@ -51,7 +52,16 @@ if (program.watch) {
 
     process.on('uncaughtException', (error) => {
         console.log([
-            `Force closing due to a critical error:\n`,
+            `[uncaughtException] Force closing due to a critical error:\n`,
+            chalk.red(error.stack),
+        ].join(' '));
+        daemon.onForceExit();
+        process.exit(1);
+    });
+
+    process.on('unhandledRejection', (error) => {
+        console.log([
+            `[unhandledRejection] Force closing due to a critical error:\n`,
             chalk.red(error.stack),
         ].join(' '));
         daemon.onForceExit();
@@ -60,4 +70,8 @@ if (program.watch) {
 
     // nodemon style shutdown
     process.once('SIGUSR2', () => process.kill(process.pid, 'SIGUSR2'));
+}
+
+if (program.debugMemory) {
+    require('./helpers/debug-memory');
 }

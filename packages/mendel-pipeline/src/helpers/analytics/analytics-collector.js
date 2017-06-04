@@ -3,9 +3,11 @@ class AnalyticsCollector {
         this.options = options || {};
         this.data = [];
 
-        global.analytics = this;
-        process.on('message', () => this.record());
-        process.on('exit', () => this.onExit());
+        if (this.options.printer) {
+            global.analytics = this;
+            process.on('message', () => this.record());
+            process.on('exit', () => this.onExit());
+        }
     }
 
     onExit() {

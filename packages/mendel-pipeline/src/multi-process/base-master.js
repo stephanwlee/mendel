@@ -15,12 +15,24 @@ class BaseMasterProcess {
         this._name = options.name || 'unamed_multi_process';
         this._workers = Array.from(Array(options.numWorker || RECOMMENDED_CPUS))
             .map(() => {
-                return fork(
-                    path.join(__dirname, 'worker.js'),
-                    [this._name, workerFileName].concat(options.workerArgs)
-                );
+                const args = [
+                    this._name,
+                    workerFileName
+                ]
+                .concat(options.workerArgs)
+                .filter(Boolean);
+
+                return fork(path.join(__dirname, 'worker.js'), args);
             });
         this._workers.forEach(cp => analyticsCollector.connectProcess(cp));
+        this._workers.forEach(cp => {
+            const {pid} = cp;
+            cp.once('close', (code, signal) => {
+                console.error('[ERROR] Worker process unexpectedly exited.');
+                this._workers.splice(this._workers.indexOf(cp), 1);
+                this._idleWorkers.splice(this._idleWorkers.indexOf(pid), 1);
+            });
+        });
 
         // Queues
         this._idleWorkers = this._workers.map(({pid}) => pid);
@@ -89,6 +101,7 @@ class BaseMasterProcess {
             }
 
             if (type === Protocol.ERROR) {
+                console.log('worker thread rejected', type, message);
                 promise.reject(message);
             } else if (type === Protocol.DONE) {
                 promise.resolve(message);

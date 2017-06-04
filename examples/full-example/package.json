@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "mendel-mocha --prelude test/setup/jsdom.js **/_test_/*.js",
-    "test-dev": "mendel-mocha --prelude test/setup/jsdom.js **/_test_/*.js --watch",
+    "test-dev": "mendel-mocha --prelude test/setup/jsdom.js **/_test_/*.js -w",
     "coverage": "mendel-mocha --prelude test/setup/jsdom.js **/_test_/*.js --reporter=mocha-istanbul-reporter --reporter-options=text,text-summary",
     "build": "NODE_ENV=production mendel",
-    "daemon": "mendel --watch",
+    "daemon": "mendel -w",
     "development": "nodemon index.js",
-    "production": "NODE_ENV=production node index.js"
+    "production": "NODE_ENV=production node index.js",
+    "memory": "node --expose-gc ./node_modules/.bin/mendel -mw"
   },
   "dependencies": {
     "express": "^4.13.4",
