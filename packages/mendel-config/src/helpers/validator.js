@@ -1,3 +1,10 @@
+const chalk = require('chalk');
+const _errors = [];
+
+function maybeThrowIfError() {
+    throw new Error('Configuration Errors\n' + _errors.join('\n'));
+}
+
 module.exports = function createValidator(schema) {
     return function(instance, injected = {}) {
         var error = [];
@@ -8,20 +15,20 @@ module.exports = function createValidator(schema) {
             var curError = [];
 
             if (criteria.required && typeof value === 'undefined') {
-                curError.push('Required ' + schemaKey + ' is not present.');
+                curError.push('Required field "' + chalk.red(schemaKey) + '" is not present.');
             }
 
             var type = Array.isArray(value) ? 'array' : typeof value;
             if (criteria.type && type !== criteria.type) {
-                curError.push('Requires `' + schemaKey + '` to be of type [' + criteria.type + '] but is [' + type + ']');
+                curError.push('Requires `' + chalk.red(schemaKey) + '` to be of type [' + criteria.type + '] but is [' + type + ']');
             }
 
             if (Array.isArray(value)) {
                 if (criteria.minLen && criteria.minLen > value.length) {
-                    curError.push('Expected `' + schemaKey + '` to be at least ' + criteria.minLen + ' long');
+                    curError.push('Expected `' + chalk.red(schemaKey) + '` to be at least ' + criteria.minLen + ' long');
                 }
                 if (criteria.maxLen && criteria.maxLen < value.length) {
-                    curError.push('Expected `' + schemaKey + '` to be below ' + criteria.maxLen + ' long');
+                    curError.push('Expected `' + chalk.red(schemaKey) + '` to be below ' + criteria.maxLen + ' long');
                 }
             }
 
@@ -32,9 +39,10 @@ module.exports = function createValidator(schema) {
                             const regex = new RegExp('\\$' + key, 'g');
                             return msg.replace(regex, injected[key]);
                         }, criteria.errorMessage);
-                    error.push(message);
+                    error.push(message + '\n  ' + curError.join('\n  '));
+                } else {
+                    error = error.concat(curError);
                 }
-                error = error.concat(curError);
             }
         });
 
@@ -49,12 +57,15 @@ module.exports = function createValidator(schema) {
         }
 
         if (error.length) {
-            throw new Error(
+            _errors.push(
                 error.filter(Boolean).reduce(function(reduced, error) {
-                    return reduced += 'x ' + error + '\n';
-                }, '[Bad configuration] Configuration is not valid:\n') +
-                JSON.stringify(instance, null, 2)
+                    return reduced += chalk.red('x ') + error + '\n';
+                }, '')
+                // Figure out better way of debugging
+                // JSON.stringify(instance, null, 2)
             );
         }
     };
 };
+
+module.exports.maybeThrowIfError = maybeThrowIfError;

@@ -1,23 +1,22 @@
 const path = require('path');
 const createValidator = require('./helpers/validator');
-const validate = createValidator({
-    id: {required: true},
-    dir: {required: true},
-});
 
 function BaseConfig(config) {
     const input = config.baseConfig;
 
-    validate(input);
+    BaseConfig.validate(input);
 
-    const baseConfig = {
+    return {
         id: input.id,
         dir: path.relative(config.projectRoot, input.dir),
         outdir: path.resolve(config.projectRoot, input.outdir || 'build'),
     };
-
-    return baseConfig;
 }
+
+BaseConfig.validate = createValidator({
+    id: {required: true},
+    dir: {required: true},
+});
 
 
 module.exports = BaseConfig;

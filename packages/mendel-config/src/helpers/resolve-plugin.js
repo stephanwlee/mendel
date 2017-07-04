@@ -1,7 +1,7 @@
 var nodeResolveSync = require('resolve').sync;
 var path = require('path');
 
-function resolvePlugin({plugin, basedir}, packageResolver=modeResolver) {
+function resolvePlugin({plugin, basedir}, packageResolver=noop) {
     const pluginPackagePath = _resolve(path.join(plugin, 'package.json'), {
         basedir,
     });
@@ -23,6 +23,8 @@ function resolvePlugin({plugin, basedir}, packageResolver=modeResolver) {
 
     return resolved;
 }
+
+function noop() {}
 
 function modeResolver(resolved, packageOrModule) {
     if (resolved.mode) return;

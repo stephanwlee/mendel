@@ -16,6 +16,7 @@
     "url": "https://github.com/yahoo/mendel"
   },
   "dependencies": {
+    "chalk": "^2.0.1",
     "debug": "^2.6.8",
     "js-yaml": "^3.6.1",
     "minimatch": "^3.0.3",
