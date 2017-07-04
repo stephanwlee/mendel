@@ -1,27 +1,40 @@
 module.exports = function createValidator(schema) {
-    return function(instance) {
+    return function(instance, injected = {}) {
         var error = [];
 
         Object.keys(schema).forEach(function(schemaKey) {
             var criteria = schema[schemaKey];
             var value = instance[schemaKey];
+            var curError = [];
 
             if (criteria.required && typeof value === 'undefined') {
-                return error.push('Required ' + schemaKey + ' is not present.');
+                curError.push('Required ' + schemaKey + ' is not present.');
             }
 
             var type = Array.isArray(value) ? 'array' : typeof value;
             if (criteria.type && type !== criteria.type) {
-                return error.push('Requires `' + schemaKey + '` to be of type [' + criteria.type + '] but is [' + type + ']');
+                curError.push('Requires `' + schemaKey + '` to be of type [' + criteria.type + '] but is [' + type + ']');
             }
 
             if (Array.isArray(value)) {
                 if (criteria.minLen && criteria.minLen > value.length) {
-                    error.push('Expected `' + schemaKey + '` to be at least ' + criteria.minLen + ' long');
+                    curError.push('Expected `' + schemaKey + '` to be at least ' + criteria.minLen + ' long');
                 }
                 if (criteria.maxLen && criteria.maxLen < value.length) {
-                    error.push('Expected `' + schemaKey + '` to be below ' + criteria.maxLen + ' long');
+                    curError.push('Expected `' + schemaKey + '` to be below ' + criteria.maxLen + ' long');
                 }
+            }
+
+            if (curError.length) {
+                if (criteria.errorMessage) {
+                    const message = Object.keys(injected)
+                        .reduce((msg, key) => {
+                            const regex = new RegExp('\\$' + key, 'g');
+                            return msg.replace(regex, injected[key]);
+                        }, criteria.errorMessage);
+                    error.push(message);
+                }
+                error = error.concat(curError);
             }
         });
 

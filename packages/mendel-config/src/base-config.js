@@ -1,5 +1,5 @@
 const path = require('path');
-const createValidator = require('./validator');
+const createValidator = require('./helpers/validator');
 const validate = createValidator({
     id: {required: true},
     dir: {required: true},

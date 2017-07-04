@@ -1,5 +1,5 @@
 const parseVariations = require('../variations');
-const createValidator = require('./validator');
+const createValidator = require('./helpers/validator');
 const validate = createValidator({
     variations: {type: 'array', minLen: 1},
     // There can be a user of Mendel who does not want variation but faster build.

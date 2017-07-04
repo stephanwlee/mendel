@@ -1,4 +1,4 @@
-const createValidator = require('./validator');
+const createValidator = require('./helpers/validator');
 const path = require('path');
 const {undash} = require('./util');
 

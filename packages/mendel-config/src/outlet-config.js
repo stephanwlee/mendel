@@ -1,5 +1,5 @@
-var createValidator = require('./validator');
-var resolvePlugin = require('./resolve-plugin');
+var createValidator = require('./helpers/validator');
+var resolvePlugin = require('./helpers/resolve-plugin');
 
 function OutletConfig({id, plugin, options={}}, {projectRoot}) {
     this.id = id;
