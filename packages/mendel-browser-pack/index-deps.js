@@ -85,7 +85,8 @@ module.exports = function indexedDeps(mods) {
             }
 
 
-            else if(prop === 'id') { // id needs to be reindexed
+            else if (prop === 'id') {
+                // id needs to be reindexed
                 var index = newModIndex.indexOf(oldMod.id);
                 if (index > -1) {
                     newMod.id = index;
@@ -103,4 +104,4 @@ module.exports = function indexedDeps(mods) {
             return newMod;
         }, {});
     });
-}
+};

@@ -107,6 +107,7 @@ ${INLINE_MAP_PREFIX}${new Buffer(JSON.stringify(item.map)).toString('base64')}`,
         });
 
         return Array.from(groupedByNorm.values()).map((entry, index) => {
+	    index = index + 1;
             const internal = !entry.entry && !entry.expose;
             if (!internal) return entry;
 
