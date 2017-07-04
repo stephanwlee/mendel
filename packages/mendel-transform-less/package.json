@@ -4,6 +4,7 @@
   "description": "Mendel transformer for LESS",
   "main": "index.js",
   "mode": "ist",
+  "exec": "css",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

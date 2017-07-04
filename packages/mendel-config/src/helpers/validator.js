@@ -2,6 +2,8 @@ const chalk = require('chalk');
 const _errors = [];
 
 function maybeThrowIfError() {
+    if (!_errors.length) return;
+
     throw new Error('Configuration Errors\n' + _errors.join('\n'));
 }
 

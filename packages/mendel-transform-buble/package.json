@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "mode": "ist",
+  "exec": "js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/yahoo/mendel.git"

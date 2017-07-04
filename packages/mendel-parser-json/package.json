@@ -4,6 +4,7 @@
   "description": "Wraps JSON file in a JavaScript module for bundling with assets in Mendel",
   "main": "index.js",
   "mode": "ist",
+  "exec": "js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
