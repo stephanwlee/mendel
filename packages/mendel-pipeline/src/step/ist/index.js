@@ -1,4 +1,4 @@
-const BaseStep = require('./step');
+const BaseStep = require('../step');
 
 class IndependentSourceTransform extends BaseStep {
     /**
