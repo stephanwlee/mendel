@@ -1,6 +1,6 @@
 {
   "name": "mendel-outlet-browser-pack",
-  "version": "3.1.1",
+  "version": "3.3.0",
   "description": "Mendel outlet for JavaScript bundles using browser-pack.",
   "main": "src/index.js",
   "scripts": {
@@ -14,6 +14,6 @@
   },
   "dependencies": {
     "debug": "^2.6.0",
-    "mendel-browser-pack": "3.0.0"
+    "mendel-browser-pack": "^3.3.0"
   }
 }
