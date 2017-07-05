@@ -1,4 +1,4 @@
-var createValidator = require('./validator');
+var createValidator = require('./helpers/validator');
 var nodeResolve = require('resolve').sync;
 
 function GeneratorConfig({id, plugin}, {projectRoot}) {

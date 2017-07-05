@@ -1,9 +1,10 @@
 {
   "name": "mendel-transform-babel",
-  "version": "3.0.0",
+  "version": "3.3.0",
   "description": "Mendel transforms that uses babel-core",
   "main": "index.js",
   "mode": "ist",
+  "exec": "js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

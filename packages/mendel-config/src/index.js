@@ -6,7 +6,8 @@
 const path = require('path');
 const inspect = require('util').inspect;
 const debug = require('debug')('mendel:config');
-const {undash} = require('./util');
+const {undash} = require('./helpers/util');
+const {maybeThrowIfError} = require('./helpers/validator');
 
 const defaultConfig = require('./defaults');
 const TransformConfig = require('./transform-config');
@@ -43,7 +44,7 @@ module.exports = function(rawConfig) {
         return new TypesConfig(typeName, config.types[typeName], config);
     });
 
-    // utility function for types as we almost always do this
+    // helpers/utility function for types as we almost always do this
     (function(types) {
         const map = new Map();
         types.forEach(type => map.set(type.name, type));
@@ -69,6 +70,8 @@ module.exports = function(rawConfig) {
     config.shim = ShimConfig(config);
 
     validateTypesAndTransforms(config);
+
+    maybeThrowIfError();
 
     debug(inspect(config, {
         colors: true,

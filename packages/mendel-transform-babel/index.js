@@ -2,12 +2,17 @@ const babel = require('babel-core');
 const path = require('path');
 
 function optionDepPath(arr, optionName) {
-    return (arr || []).map(el => {
+    if (!Array.isArray(arr)) return [];
+    return arr.map(el => {
         const name = typeof el === 'string' ? el : el[0];
         let absPath = '';
 
         try {
-            absPath = require.resolve(path.join(process.cwd(), name));
+            if (!path.isAbsolute(name)) {
+                absPath = require.resolve(path.join(process.cwd(), name));
+            } else {
+                absPath = name;
+            }
         } catch (e) {
             const pkgDir = path.join(
                 process.cwd(),
@@ -17,9 +22,12 @@ function optionDepPath(arr, optionName) {
             absPath = require.resolve(pkgDir);
         }
 
-        if (typeof el === 'string') return absPath;
-        el[0] = absPath;
-        return el;
+        if (typeof el === 'string') {
+            return absPath;
+        } else {
+            el[0] = absPath;
+            return el;
+        }
     });
 }
 

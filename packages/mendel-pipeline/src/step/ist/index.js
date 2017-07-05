@@ -1,4 +1,18 @@
-const BaseStep = require('./step');
+const path = require('path');
+const BaseStep = require('../step');
+
+const _internalTransforms = [
+    require('./defaults-js/global'),
+];
+const execToDefaultTransforms = new Map();
+
+['js', 'css', 'html'].forEach(exec => {
+    execToDefaultTransforms.set(
+        exec,
+        _internalTransforms
+        .filter(({config}) => config.exec === exec)
+        .map(({config}) => config.id));
+});
 
 class IndependentSourceTransform extends BaseStep {
     /**
@@ -10,10 +24,19 @@ class IndependentSourceTransform extends BaseStep {
         super();
 
         this._registry = registry;
-        this._transformer = transformer;
         this._depsResolver = depsResolver;
+        this._transformer = transformer;
 
-        this._transforms = options.transforms;
+        this._transforms = new Map();
+        options.transforms.forEach(transform => {
+            this._transforms.set(transform.id, transform);
+        });
+
+        _internalTransforms.forEach(({config}) => {
+            this._transforms.set(config.id, config);
+            this._transformer.addTransform(config);
+        });
+
         this._parserTypeConversion = new Map();
         this._types = options.types;
         this._types.forEach(type => {
@@ -24,14 +47,33 @@ class IndependentSourceTransform extends BaseStep {
         });
     }
 
-    getTransformIdsByType(typeName) {
+    getTransformIdsByTypeAndExec(typeName, optEntryId) {
         const type = this._types.get(typeName);
         // Secondary type can be also missing.
         if (!type) return [];
-        if (!this._parserTypeConversion.has(typeName))
-            return type.transforms;
+        let appendIds = [];
+        if (optEntryId) {
+            const exec = this.inferExec(optEntryId, type.transforms);
+            appendIds = execToDefaultTransforms.get(exec) || [];
+        }
+        return type.transforms.concat(appendIds, [type.parser]).filter(Boolean);
+    }
 
-        return type.transforms.concat([type.parser]);
+    inferExec(id, xformIds) {
+        if (xformIds.length) {
+            const transform = this._transforms.get(xformIds[0]);
+            return transform.exec;
+        }
+        switch (path.extname) {
+            case '.js':
+            case '.jsx':
+            case '.esnext':
+                return 'js';
+            case '.css':
+                return 'css';
+            case '.html':
+                return 'html';
+        }
     }
 
     getTransform(entry) {
@@ -51,10 +93,16 @@ class IndependentSourceTransform extends BaseStep {
                 typeConfig = config;
             }
         }
-        if (!typeConfig) return {type, ids: []};
+        if (!typeConfig) {
+            return {
+                type,
+                ids: this.getTransformIdsByTypeAndExec(type, entry.id),
+            };
+        }
 
         const ist = {type: typeConfig.name, ids: []};
-        let xformIds = this.getTransformIdsByType(ist.type);
+
+        let xformIds = this.getTransformIdsByTypeAndExec(ist.type, entry.id);
 
         // If there is a parser, do type conversion
         while (this._parserTypeConversion.has(ist.type)) {
@@ -62,15 +110,16 @@ class IndependentSourceTransform extends BaseStep {
             // node_modules cannot change its type
             if (ist.type !== 'node_modules') ist.type = newType;
             else ist._type = newType;
-            xformIds = xformIds.concat(this.getTransformIdsByType(ist.type));
+            xformIds = xformIds.concat(this.getTransformIdsByTypeAndExec(ist.type));
         }
 
         ist.ids = xformIds
-            .map(xformId => this._transforms.find(({id}) => xformId === id))
+            .map(xformId => this._transforms.get(xformId))
             .filter(Boolean)
             .filter(({mode}) => mode === 'ist')
             .map(({id}) => id);
 
+        // console.log(entry.id, ist.ids);
         return ist;
     }
 

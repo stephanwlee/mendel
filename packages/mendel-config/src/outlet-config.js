@@ -1,12 +1,12 @@
-var createValidator = require('./validator');
-var resolvePlugin = require('./resolve-plugin');
+var createValidator = require('./helpers/validator');
+var resolvePlugin = require('./helpers/resolve-plugin');
 
-function OutletConfig({id, plugin, options={}}, {projectRoot}) {
+function OutletConfig({id, plugin, options={}}, {projectRoot: basedir}) {
     this.id = id;
     this._plugin = plugin;
     this.options = options;
 
-    this.plugin = resolvePlugin(plugin, projectRoot).plugin;
+    this.plugin = resolvePlugin({plugin, basedir}).plugin;
 
     if (this.options.plugin) {
         if (!Array.isArray(this.options.plugin)) {
@@ -18,9 +18,9 @@ function OutletConfig({id, plugin, options={}}, {projectRoot}) {
             }
 
             if (typeof plugin === 'string')
-                return resolvePlugin(plugin, projectRoot).plugin;
+                return resolvePlugin({plugin, basedir}).plugin;
 
-            plugin[0] = resolvePlugin(plugin[0], projectRoot).plugin;
+            plugin[0] = resolvePlugin({plugin: plugin[0], basedir}).plugin;
             return plugin;
         });
     }

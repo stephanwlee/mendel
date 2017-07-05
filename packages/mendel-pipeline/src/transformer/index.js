@@ -19,6 +19,10 @@ class TransformManager extends MultiProcessMaster {
         });
     }
 
+    addTransform(transform) {
+        this._transforms.set(transform.id, transform);
+    }
+
     /**
      * @override
      */

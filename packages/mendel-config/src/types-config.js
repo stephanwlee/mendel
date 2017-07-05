@@ -1,4 +1,4 @@
-var createValidator = require('./validator');
+var createValidator = require('./helpers/validator');
 var Minimatch = require('minimatch').Minimatch;
 
 function TypesConfig(typeName, type) {
