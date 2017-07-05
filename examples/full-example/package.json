@@ -10,6 +10,7 @@
     "build": "NODE_ENV=production mendel",
     "build-files": "mendel",
     "daemon": "mendel --watch",
+    "start": "mendel --watch",
     "development": "nodemon index.js",
     "production": "NODE_ENV=production node index.js"
   },
