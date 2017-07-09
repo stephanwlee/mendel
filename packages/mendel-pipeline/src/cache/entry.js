@@ -84,7 +84,7 @@ class Entry {
 }
 
 function isNodeModule(id) {
-    return id.indexOf('node_modules') >= 0;
+    return id.indexOf('node_modules') >= 0 || /\/mendel-\S+\//.test(id);
 }
 
 module.exports = Entry;

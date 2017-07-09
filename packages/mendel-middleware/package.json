@@ -22,9 +22,9 @@
   },
   "dependencies": {
     "debug": "^2.6.3",
-    "mendel-browser-pack": "3.3.0",
+    "mendel-browser-pack": "^3.3.0",
     "mendel-core": "^3.3.0",
-    "mendel-loader": "^3.3.0",
+    "mendel-loader": "^3.0.0",
     "path-to-regexp": "^1.2.1"
   }
 }

@@ -3,6 +3,7 @@ module.exports = [
     'packages/mendel-config',
     'packages/mendel-core',
     'packages/mendel-deps',
+    'packages/mendel-browser-pack',
     'packages/mendel-development',
     'packages/mendel-development-middleware',
     'packages/mendel-exec',

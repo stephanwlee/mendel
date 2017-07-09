@@ -30,7 +30,6 @@ class DepsManager extends MultiProcessMaster {
             return Promise.resolve({id: entryId, deps: {}});
         }
 
-
         return this.dispatchJob({
             filePath: entryId,
             source,
