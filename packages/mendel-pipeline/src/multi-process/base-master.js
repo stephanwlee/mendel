@@ -1,10 +1,13 @@
 const analyticsCollector = require('../helpers/analytics/analytics-collector');
 const analyzeIpc = require('../helpers/analytics/analytics')('ipc');
 const {fork} = require('child_process');
-// After 4, there is a diminishing marginal utility at cost of memory.
-const RECOMMENDED_CPUS = Math.max(2, Math.min(4, require('os').cpus().length));
+const debug = require('debug');
+const RECOMMENDED_CPUS = require('os').cpus().length;
 const Protocol = require('./protocol');
 const path = require('path');
+
+// Deallocate unused child process after 10 seconds.
+const CHILD_PROCESS_DEALLOC_PERIOD = 7.5e3;
 
 class BaseMasterProcess {
     static get Protocol() {
@@ -13,33 +16,78 @@ class BaseMasterProcess {
 
     constructor(workerFileName, options={}) {
         this._name = options.name || 'unamed_multi_process';
-        this._workers = Array.from(Array(options.numWorker || RECOMMENDED_CPUS))
-            .map(() => {
-                return fork(
-                    path.join(__dirname, 'worker.js'),
-                    [this._name, workerFileName].concat(options.workerArgs)
-                );
-            });
-        this._workers.forEach(cp => analyticsCollector.connectProcess(cp));
-        this._workers.forEach(cp => {
-            const {pid} = cp;
-            cp.once('close', () => {
-                console.error('[ERROR] Worker process unexpectedly exited.');
-                this._workers.splice(this._workers.indexOf(cp), 1);
-                this._idleWorkers.splice(this._idleWorkers.indexOf(pid), 1);
-            });
-        });
+        this._workerArgs = [this._name, workerFileName]
+            .concat(options.workerArgs);
+        this._maxChildCount = options.numWorker || RECOMMENDED_CPUS;
 
         // Queues
-        this._idleWorkers = this._workers.map(({pid}) => pid);
+        this._workers = new Map();
+        this._idleWorkers = [];
         this._jobs = [];
 
         // Get Listeners from subclass
         this._subscribers = this.subscribe();
+
+        // debug related
+        this._debug = debug(`mendel:${this._name}:master`);
     }
 
     _exit() {
-        this._workers.forEach(w => w.kill());
+        this._workers.forEach(({process}) => this.dealloc(process));
+    }
+
+    canAlloc() {
+        return this._workers.size < this._maxChildCount;
+    }
+
+    alloc() {
+        const child = fork(path.join(__dirname, 'worker.js'), this._workerArgs);
+        const {pid} = child;
+
+        analyticsCollector.connectProcess(child);
+        child.once('error', () => {
+            console.error('[ERROR] Worker process unexpectedly exited.');
+            this.dealloc(child);
+        });
+
+        this._workers.set(pid, {
+            process: child,
+            timer: this._setChildTTL(child),
+        });
+        this._idleWorkers.push(pid);
+
+        this._debug(`[${this._name}:${pid}] alloced`);
+    }
+
+    _setChildTTL(child) {
+        return setTimeout(
+            () => this.dealloc(child),
+            CHILD_PROCESS_DEALLOC_PERIOD
+        );
+    }
+
+    dealloc(child) {
+        if (child.connected) {
+            child.send({
+                type: Protocol.DONE,
+                args: {},
+            });
+            child.kill();
+        }
+
+        const {pid} = child;
+        this._workers.delete(pid);
+        this._idleWorkers.splice(this._idleWorkers.indexOf(pid), 1);
+        this._debug(`[${this._name}:${pid}] dealloced`);
+    }
+
+    getIdleProcess() {
+        const workerId = this._idleWorkers.shift();
+        const desc = this._workers.get(workerId);
+
+        clearTimeout(desc.timer);
+        desc.timer = this._setChildTTL(desc.process);
+        return desc.process;
     }
 
     onExit() {
@@ -72,21 +120,19 @@ class BaseMasterProcess {
     }
 
     _next() {
-        if (!this._jobs.length || !this._idleWorkers.length) return;
+        if (!this._jobs.length) return;
+        if (!this._idleWorkers.length) {
+            if (this.canAlloc()) {
+                this.alloc();
+                setImmediate(() => this._next());
+            }
+            return;
+        }
 
         const self = this;
 
         const {args, promise} = this._jobs.shift();
-        const workerId = this._idleWorkers.shift();
-        const worker = this._workers.find(({pid}) => workerId === pid);
-
-        // Since we didn't put the workerId back to the idle queue, it
-        // should never be used.
-        if (!worker.connected) {
-            const ind = this._workers.indexOf(worker);
-            this._workers.splice(ind, 1);
-            return this._next();
-        }
+        const worker = this.getIdleProcess();
 
         worker.on('message', function onMessage({type, message}) {
             setImmediate(() => self._next());
